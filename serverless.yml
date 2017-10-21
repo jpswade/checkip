@@ -1,0 +1,13 @@
+service: checkip
+provider:
+  name: aws
+  runtime: nodejs6.10
+  region: eu-west-1
+functions:
+  index:
+    handler: handler.check
+    events:
+      - http:
+          path: /
+          method: get
+          cors: true
