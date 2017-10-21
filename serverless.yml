@@ -20,3 +20,11 @@ functions:
           cors: true
 plugins:
   - serverless-offline
+  - serverless-domain-manager
+
+custom:
+  customDomain:
+    domainName: ip.deaduseful.com
+    basePath: ''
+    stage: ${self:provider.stage}
+    createRoute53Record: true
