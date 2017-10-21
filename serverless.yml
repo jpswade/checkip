@@ -5,9 +5,18 @@ provider:
   region: eu-west-1
 functions:
   index:
-    handler: handler.check
+    handler: handler.index
     events:
       - http:
           path: /
           method: get
           cors: true
+  check:
+    handler: handler.check
+    events:
+      - http:
+          path: /{path*}
+          method: get
+          cors: true
+plugins:
+  - serverless-offline
