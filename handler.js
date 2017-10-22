@@ -8,7 +8,8 @@
 const ip = require('ip');
 const fs = require('fs');
 const util = require('util');
-const dns = require('dns');
+const dnsSync = require('dns-sync');
+const geoip = require('geoip-lite-country');
 
 function getIpWhois(ip) {
   const ipv4AddressSpace = require('./data/ipv4-address-space.json');
@@ -53,6 +54,14 @@ function redirect(uri) {
   return response;
 }
 
+function getGeoIpCountryCode(ip) {
+  var geo = geoip.lookup(ip);
+  if (geo) {
+    return geo.country;
+  }
+  return false;
+}
+
 module.exports.index = function(event, context, callback) {
   const ipAddress = event.requestContext.identity.sourceIp;
   body = '<title>A simple "What Is My IP Address?" lookup service.</title>'
@@ -80,6 +89,7 @@ module.exports.check = function(event, context, callback) {
   }
   if (ipVersion) {
     var whois = getIpWhois(path);
+    var countryCode = getGeoIpCountryCode(path);
     data = {
       'ip': path,
       'version': ipVersion,
@@ -87,22 +97,22 @@ module.exports.check = function(event, context, callback) {
       'long': ip.toLong(path),
       'whois': whois,
       'whoisUrl': getIpWhoisUrl(whois, path),
+      'countryCode': countryCode,
     };
   } else {
     pattern = /^(?:[a-z\d])(?:[a-z\d-\.]*)\.(?:[a-z]+)$/;
     if (path.match(pattern)) {
-      var dnsSync = require('dns-sync');
       let ipAddress = dnsSync.resolve(path);
       if (ipAddress) {
         response = redirect(ipAddress);
       } else {
         data = {
-          'error': 'Unable to get IP Address'
+          'errorMessage': 'Unable to get IP Address'
         };
       }
     } else {
       data = {
-        'error': 'Unknown input'
+        'errorMessage': 'Unknown input'
       };
     }
   }

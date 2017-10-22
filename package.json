@@ -5,7 +5,9 @@
   "keywords": "ip address, internet protocol lookup, country code, blacklist check, hexidecimal ip, longip",
   "main": "handler.js",
   "dependencies": {
+    "country-data": "0.0.31",
     "dns-sync": "^0.1.3",
+    "geoip-lite-country": "^1.1.5",
     "ip": "^1.1.5",
     "mocha": "^4.0.1",
     "serverless-domain-manager": "^1.1.15",
