@@ -15,7 +15,7 @@ functions:
     handler: handler.check
     events:
       - http:
-          path: /{path*}
+          path: /{path}
           method: get
           cors: true
 plugins:

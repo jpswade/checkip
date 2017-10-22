@@ -1,0 +1,35 @@
+{
+  "name": "checkip",
+  "version": "1.0.0",
+  "description": "A simple 'What Is My IP Address?' lookup service.",
+  "keywords": "ip address, internet protocol lookup, country code, blacklist check, hexidecimal ip, longip",
+  "main": "handler.js",
+  "dependencies": {
+    "dns-sync": "^0.1.3",
+    "ip": "^1.1.5",
+    "mocha": "^4.0.1",
+    "serverless-domain-manager": "^1.1.15",
+    "serverless-offline": "^3.16.0",
+    "xml2js": "^0.4.19"
+  },
+  "devDependencies": {
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.8.0"
+  },
+  "scripts": {
+    "start": "serverless offline start",
+    "deply": "sls deploy",
+    "test": "echo \"Error: no test specified yet.\" && exit 1",
+    "lint": "eslint ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jpswade/checkip.git"
+  },
+  "author": "James Wade",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jpswade/checkip/issues"
+  },
+  "homepage": "https://github.com/jpswade/checkip#readme"
+}

@@ -15,7 +15,10 @@ function getIpWhois(ip) {
   var ipSplit = ip.split('.');
   var prefix = ipSplit[0];
   var record = ipv4AddressSpace.registry.record[prefix];
-  return record['whois'][0];
+  if (record.whois && record.whois.length > 0) {
+    return record.whois[0];
+  }
+  return false;
 }
 
 function getIpWhoisUrl(whois, ip = null) {
@@ -29,6 +32,9 @@ function getIpWhoisUrl(whois, ip = null) {
   };
   if (whoisUrls[whois] !== 'undefined') {
     var url = whoisUrls[whois];
+    if (!url) {
+      return false;
+    }
     if (ip) {
       return util.format(url, ip);
     }
@@ -49,24 +55,23 @@ function redirect(uri) {
 
 module.exports.index = function(event, context, callback) {
   const ipAddress = event.requestContext.identity.sourceIp;
-  response = redirect(ipAddress);
+  body = '<title>A simple "What Is My IP Address?" lookup service.</title>'
+  body += '<a href="/' + ipAddress + '">' + ipAddress + '</a>';
+  response = {
+    statusCode: 200,
+    headers: {
+      'Content-type': 'text/html',
+      'Remote-addr': ipAddress,
+    },
+    body: body
+  };
   return callback(null, response);
 }
 
 module.exports.check = function(event, context, callback) {
   let response = false;
-  let path = event.path;
   let data = {};
-  path = event.pathParameters.path;
-  /*
-  // @TODO Fix dns lookups.
-  i = path.charAt(0);
-  if (typeof i !== 'number') {
-    dns.lookup(path, function(err, address, family) {
-      response = redirect(address);
-      return callback(null, response);
-		});
-  }*/
+  let path = event.pathParameters.path;
   let ipVersion = false;
   if (ip.isV4Format(path)) {
     ipVersion = 4;
@@ -84,9 +89,22 @@ module.exports.check = function(event, context, callback) {
       'whoisUrl': getIpWhoisUrl(whois, path),
     };
   } else {
-    data = {
-      'error': 'Unknown'
-    };
+    pattern = /^(?:[a-z\d])(?:[a-z\d-\.]*)\.(?:[a-z]+)$/;
+    if (path.match(pattern)) {
+      var dnsSync = require('dns-sync');
+      let ipAddress = dnsSync.resolve(path);
+      if (ipAddress) {
+        response = redirect(ipAddress);
+      } else {
+        data = {
+          'error': 'Unable to get IP Address'
+        };
+      }
+    } else {
+      data = {
+        'error': 'Unknown input'
+      };
+    }
   }
 
   if (!response) {
