@@ -8,8 +8,8 @@
 const ip = require('ip');
 const fs = require('fs');
 const util = require('util');
-const dnsSync = require('dns-sync');
 const geoip = require('geoip-lite-country');
+const dns = require('dns-then');
 
 function getIpWhois(ip) {
     const ipv4AddressSpace = require('./data/ipv4-address-space.json');
@@ -44,14 +44,13 @@ function getIpWhoisUrl(whois, ip) {
 }
 
 function redirect(uri) {
-    var response = {
+    return {
         statusCode: 302,
         headers: {
             'Location': '/' + uri
         },
         body: null
     };
-    return response;
 }
 
 function getGeoIpCountryCode(ip) {
@@ -78,10 +77,10 @@ module.exports.index = function (event, context, callback) {
 };
 
 module.exports.check = function (event, context, callback) {
-    var response = false;
     var data = {};
     var path = event.pathParameters.path;
     var ipVersion = false;
+    var error = false;
     if (ip.isV4Format(path)) {
         ipVersion = 4;
     } else if (ip.isV6Format(path)) {
@@ -102,26 +101,24 @@ module.exports.check = function (event, context, callback) {
     } else {
         var pattern = /^(?:[a-z0-9])(?:[a-z0-9-\.]*)\.(?:[a-z]+)$/;
         if (path.match(pattern)) {
-            var ipAddress = dnsSync.resolve(path);
-            if (ipAddress) {
+            dns.lookup(path, function (err, ipAddress) {
                 response = redirect(ipAddress);
-            } else {
-                data = {
-                    'errorMessage': 'Unable to get IP Address'
-                };
-            }
+                return callback(null, response);
+            });
+            error = 'Unable to get IP Address';
         } else {
-            data = {
-                'errorMessage': 'Unknown input'
-            };
+            error = 'Unknown input';
         }
     }
 
-    if (!response) {
-        response = {
-            statusCode: 200,
-            body: JSON.stringify(data)
+    if (error) {
+        data = {
+            'errorMessage': error
         };
     }
+    var response = {
+        statusCode: 200,
+        body: JSON.stringify(data)
+    };
     return callback(null, response);
 };
