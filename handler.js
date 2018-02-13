@@ -12,116 +12,116 @@ const dnsSync = require('dns-sync');
 const geoip = require('geoip-lite-country');
 
 function getIpWhois(ip) {
-  const ipv4AddressSpace = require('./data/ipv4-address-space.json');
-  var ipSplit = ip.split('.');
-  var prefix = ipSplit[0];
-  var record = ipv4AddressSpace.registry.record[prefix];
-  if (record.whois && record.whois.length > 0) {
-    return record.whois[0];
-  }
-  return false;
+    const ipv4AddressSpace = require('./data/ipv4-address-space.json');
+    var ipSplit = ip.split('.');
+    var prefix = ipSplit[0];
+    var record = ipv4AddressSpace.registry.record[prefix];
+    if (record.whois && record.whois.length > 0) {
+        return record.whois[0];
+    }
+    return false;
 }
 
-function getIpWhoisUrl(whois, ip = null) {
-  const whoisUrls = {
-    'whois.afrinic.net': 'http://www.afrinic.net/cgi-bin/whois?searchtext=%s',
-    'whois.apnic.net': 'http://wq.apnic.net/apnic-bin/whois.pl?searchtext=%s',
-    'whois.arin.net': 'http://whois.arin.net/rest/ip/%s',
-    'whois.lacnic.net': 'http://lacnic.net/cgi-bin/lacnic/whois?query=%s',
-    'whois.ripe.net': 'https://apps.db.ripe.net/search/query.html?searchtext=%s',
-    'whois.iana.org': 'http://www.iana.org/cgi-bin/whois?q=%s',
-  };
-  if (whoisUrls[whois] !== 'undefined') {
-    var url = whoisUrls[whois];
-    if (!url) {
-      return false;
+function getIpWhoisUrl(whois, ip) {
+    const whoisUrls = {
+        'whois.afrinic.net': 'http://www.afrinic.net/cgi-bin/whois?searchtext=%s',
+        'whois.apnic.net': 'http://wq.apnic.net/apnic-bin/whois.pl?searchtext=%s',
+        'whois.arin.net': 'http://whois.arin.net/rest/ip/%s',
+        'whois.lacnic.net': 'http://lacnic.net/cgi-bin/lacnic/whois?query=%s',
+        'whois.ripe.net': 'https://apps.db.ripe.net/search/query.html?searchtext=%s',
+        'whois.iana.org': 'http://www.iana.org/cgi-bin/whois?q=%s'
+    };
+    if (whoisUrls[whois] !== 'undefined') {
+        var url = whoisUrls[whois];
+        if (!url) {
+            return false;
+        }
+        if (ip) {
+            return util.format(url, ip);
+        }
+        return url;
     }
-    if (ip) {
-      return util.format(url, ip);
-    }
-    return url;
-  }
 }
 
 function redirect(uri) {
-  response = {
-    statusCode: 302,
-    headers: {
-      'Location': '/' + uri
-    },
-    body: null,
-  };
-  return response;
+    response = {
+        statusCode: 302,
+        headers: {
+            'Location': '/' + uri
+        },
+        body: null
+    };
+    return response;
 }
 
 function getGeoIpCountryCode(ip) {
-  var geo = geoip.lookup(ip);
-  if (geo) {
-    return geo.country;
-  }
-  return false;
-}
-
-module.exports.index = function(event, context, callback) {
-  const ipAddress = event.requestContext.identity.sourceIp;
-  body = '<title>A simple "What Is My IP Address?" lookup service.</title>'
-  body += '<a href="/' + ipAddress + '">' + ipAddress + '</a>';
-  response = {
-    statusCode: 200,
-    headers: {
-      'Content-type': 'text/html',
-      'Remote-addr': ipAddress,
-    },
-    body: body
-  };
-  return callback(null, response);
-}
-
-module.exports.check = function(event, context, callback) {
-  let response = false;
-  let data = {};
-  let path = event.pathParameters.path;
-  let ipVersion = false;
-  if (ip.isV4Format(path)) {
-    ipVersion = 4;
-  } else if (ip.isV6Format(path)) {
-    ipVersion = 6;
-  }
-  if (ipVersion) {
-    var whois = getIpWhois(path);
-    var countryCode = getGeoIpCountryCode(path);
-    data = {
-      'ip': path,
-      'version': ipVersion,
-      'private': ip.isPrivate(path),
-      'long': ip.toLong(path),
-      'whois': whois,
-      'whoisUrl': getIpWhoisUrl(whois, path),
-      'countryCode': countryCode,
-    };
-  } else {
-    pattern = /^(?:[a-z\d])(?:[a-z\d-\.]*)\.(?:[a-z]+)$/;
-    if (path.match(pattern)) {
-      let ipAddress = dnsSync.resolve(path);
-      if (ipAddress) {
-        response = redirect(ipAddress);
-      } else {
-        data = {
-          'errorMessage': 'Unable to get IP Address'
-        };
-      }
-    } else {
-      data = {
-        'errorMessage': 'Unknown input'
-      };
+    var geo = geoip.lookup(ip);
+    if (geo) {
+        return geo.country;
     }
-  }
+    return false;
+}
 
-  if (!response) {
+module.exports.index = function (event, context, callback) {
+    const ipAddress = event.requestContext.identity.sourceIp;
+    body = '<title>A simple "What Is My IP Address?" lookup service.</title>';
+    body += '<a href="/' + ipAddress + '">' + ipAddress + '</a>';
     response = {
-      statusCode: 200,
-      body: JSON.stringify(data)
+        statusCode: 200,
+        headers: {
+            'Content-type': 'text/html',
+            'Remote-addr': ipAddress
+        },
+        body: body
     };
-  }
-  return callback(null, response);
+    return callback(null, response);
+};
+
+module.exports.check = function (event, context, callback) {
+    var response = false;
+    var data = {};
+    var path = event.pathParameters.path;
+    var ipVersion = false;
+    if (ip.isV4Format(path)) {
+        ipVersion = 4;
+    } else if (ip.isV6Format(path)) {
+        ipVersion = 6;
+    }
+    if (ipVersion) {
+        var whois = getIpWhois(path);
+        var countryCode = getGeoIpCountryCode(path);
+        data = {
+            'ip': path,
+            'version': ipVersion,
+            'private': ip.isPrivate(path),
+            'long': ip.toLong(path),
+            'whois': whois,
+            'whoisUrl': getIpWhoisUrl(whois, path),
+            'countryCode': countryCode
+        };
+    } else {
+        var pattern = /^(?:[a-z0-9])(?:[a-z0-9-\.]*)\.(?:[a-z]+)$/;
+        if (path.match(pattern)) {
+            var ipAddress = dnsSync.resolve(path);
+            if (ipAddress) {
+                response = redirect(ipAddress);
+            } else {
+                data = {
+                    'errorMessage': 'Unable to get IP Address'
+                };
+            }
+        } else {
+            data = {
+                'errorMessage': 'Unknown input'
+            };
+        }
+    }
+
+    if (!response) {
+        response = {
+            statusCode: 200,
+            body: JSON.stringify(data)
+        };
+    }
+    return callback(null, response);
 };
