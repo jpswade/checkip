@@ -44,7 +44,7 @@ function getIpWhoisUrl(whois, ip) {
 }
 
 function redirect(uri) {
-    response = {
+    var response = {
         statusCode: 302,
         headers: {
             'Location': '/' + uri
@@ -64,9 +64,9 @@ function getGeoIpCountryCode(ip) {
 
 module.exports.index = function (event, context, callback) {
     const ipAddress = event.requestContext.identity.sourceIp;
-    body = '<title>A simple "What Is My IP Address?" lookup service.</title>';
+    var body = '<title>A simple "What Is My IP Address?" lookup service.</title>';
     body += '<a href="/' + ipAddress + '">' + ipAddress + '</a>';
-    response = {
+    var response = {
         statusCode: 200,
         headers: {
             'Content-type': 'text/html',
